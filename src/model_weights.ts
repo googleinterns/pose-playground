@@ -17,34 +17,33 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-export type Vector2D = {
-  y: number,
-  x: number
-};
+export class ModelWeights {
+  private variables: {[varName: string]: tf.Tensor};
 
-export type Part = {
-  heatmapX: number,
-  heatmapY: number,
-  id: number
-};
+  constructor(variables: {[varName: string]: tf.Tensor}) {
+    this.variables = variables;
+  }
 
-export type PartWithScore = {
-  score: number,
-  part: Part
-};
+  weights(layerName: string) {
+    return this.variables[`MobilenetV1/${layerName}/weights`] as tf.Tensor4D;
+  }
 
-export type Keypoint = {
-  score: number,
-  position: Vector2D,
-  part: string
-};
+  depthwiseBias(layerName: string) {
+    return this.variables[`MobilenetV1/${layerName}/biases`] as tf.Tensor1D;
+  }
 
-export type Pose = {
-  keypoints: Keypoint[],
-  score: number,
-};
+  convBias(layerName: string) {
+    return this.depthwiseBias(layerName);
+  }
 
-export type PosenetInput =
-    ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
+  depthwiseWeights(layerName: string) {
+    return this.variables[`MobilenetV1/${layerName}/depthwise_weights`] as
+        tf.Tensor4D;
+  }
 
-export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
+  dispose() {
+    for (const varName in this.variables) {
+      this.variables[varName].dispose();
+    }
+  }
+}

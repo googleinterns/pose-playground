@@ -20,8 +20,8 @@ import * as tf from '@tensorflow/tfjs';
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffers3D} from '../util';
 
-import {buildPartWithScoreQueue} from './buildPartWithScoreQueue';
-import {decodePose} from './decodePose';
+import {buildPartWithScoreQueue} from './build_part_with_score_queue';
+import {decodePose} from './decode_pose';
 import {getImageCoords, squaredDistance} from './util';
 
 function withinNmsRadiusOfCorrespondingPoint(
@@ -121,7 +121,6 @@ export async function decodeMultiplePoses(
     nmsRadius = 20): Promise<Pose[]> {
   const poses: Pose[] = [];
 
-  // tslint:disable-next-line:max-line-length
   const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
       await toTensorBuffers3D(
           [heatmapScores, offsets, displacementsFwd, displacementsBwd]);
