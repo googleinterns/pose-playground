@@ -15,26 +15,12 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import {version} from './index';
 
-function mod(a: tf.Tensor1D, b: number): tf.Tensor1D {
-  return tf.tidy(() => {
-    const floored = a.div(tf.scalar(b, 'int32'));
-
-    return a.sub(floored.mul(tf.scalar(b, 'int32')));
+describe('version', () => {
+  it('version matches package.json', () => {
+    // tslint:disable-next-line:no-require-imports
+    const expected = require('../package.json').version;
+    expect(version).toBe(expected);
   });
-}
-
-export function argmax2d(inputs: tf.Tensor3D): tf.Tensor2D {
-  const [height, width, depth] = inputs.shape;
-
-  return tf.tidy(() => {
-    const reshaped = inputs.reshape([height * width, depth]);
-    const coords = reshaped.argMax(0);
-
-    const yCoords = coords.div(tf.scalar(width, 'int32')).expandDims(1);
-    const xCoords = mod(coords as tf.Tensor1D, width).expandDims(1);
-
-    return tf.concat([yCoords, xCoords], 1);
-  }) as tf.Tensor2D;
-}
+});
