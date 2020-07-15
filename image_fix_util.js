@@ -173,22 +173,21 @@ function faceEstimate(keypoints, minConf, oldData, anchorPt) {
   return calculatedData;
 }
 
-function armEstimate(elbow, wrist, shoulder, refElbowPt, refWristPt, refShoulderPt, minConf, oldData, anchorPt) {
+function armEstimate(elbow, wrist, shoulderNear, shoulderFar, refElbowPt, refWristPt, refShoulderNearPt, refShoulderFarPt, minConf, oldData, anchorPt) {
   const calculatedData = {
     calculatedScale: oldData.calculatedScale,
     calculatedRotation: oldData.calculatedRotation,
   };
+  if (confidenceCheck(shoulderFar.score) && confidenceCheck(shoulderNear.score) ) {
+    calculatedData.calculatedScale = scaleMutliplier(refShoulderFarPt, refShoulderNearPt, shoulderFar, shoulderNear);
+  }
   if (confidenceCheck(elbow.score)) {
     if (anchorPt === 2) {
       if (confidenceCheck(wrist.score)) {
-        calculatedData.calculatedScale = scaleMutliplier(refElbowPt, refWristPt, elbow, wrist);
         calculatedData.calculatedRotation = rotFinder(refElbowPt, refWristPt, elbow, wrist);
       }
-    } else if (confidenceCheck(shoulder.score)) {
-      calculatedData.calculatedScale = scaleMutliplier(refShoulderPt, refElbowPt, shoulder, elbow);
-      calculatedData.calculatedRotation = rotFinder(refShoulderPt, refElbowPt, shoulder, elbow);
-    } else if (confidenceCheck(wrist.score)) {
-      calculatedData.calculatedScale = scaleMutliplier(refElbowPt, refWristPt, elbow, wrist);
+    } else if (confidenceCheck(shoulderNear.score)) {
+      calculatedData.calculatedRotation = rotFinder(refShoulderNearPt, refElbowPt, shoulderNear, elbow);
     }
   }
   return calculatedData;
@@ -197,15 +196,17 @@ function armEstimate(elbow, wrist, shoulder, refElbowPt, refWristPt, refShoulder
 function leftArmEstimate(keypoints, minConf, oldData, anchorPt) {
   const elbowIdx = 7;
   const wristIdx = 9;
-  const shoulderIdx = 5;
-  return armEstimate(keypoints[elbowIdx], keypoints[wristIdx], keypoints[shoulderIdx], unitLeftArm[0], unitLeftArm[1], unitShoudlers[0], minConf, oldData, anchorPt - elbowIdx);
+  const shoulderIdx1 = 5;
+  const shoulderIdx2 = 6;
+  return armEstimate(keypoints[elbowIdx], keypoints[wristIdx], keypoints[shoulderIdx1], keypoints[shoulderIdx2], unitLeftArm[0], unitLeftArm[1], unitShoudlers[0], unitShoudlers[1], minConf, oldData, anchorPt - elbowIdx);
 }
 
 function rightArmEstimate(keypoints, minConf, oldData, anchorPt) {
   const elbowIdx = 8;
   const wristIdx = 10;
-  const shoulderIdx = 6;
-  return armEstimate(keypoints[elbowIdx], keypoints[wristIdx], keypoints[shoulderIdx], unitRightArm[0], unitRightArm[1], unitShoudlers[1], minConf, oldData, anchorPt - elbowIdx);
+  const shoulderIdx1 = 6;
+  const shoulderIdx2 = 5;
+  return armEstimate(keypoints[elbowIdx], keypoints[wristIdx], keypoints[shoulderIdx1], keypoints[shoulderIdx2], unitRightArm[0], unitRightArm[1], unitShoudlers[1], unitShoudlers[0], minConf, oldData, anchorPt - elbowIdx);
 }
 
 function hipsEstimate(keypoints, minConf, oldData, anchorPt) {
