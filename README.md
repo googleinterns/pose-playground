@@ -1,3 +1,8 @@
-# Posenet Playground
+# Pose Playground
 
-I have cloned the [Posenet model](https://github.com/tensorflow/tfjs-models/tree/master/posenet) .
+Pose Playground is a playful way for users to experiment with different AI pose models and attach arbitary images to model keypoints.
+
+Start the dev demo server:
+```sh
+yarn watch
+```
