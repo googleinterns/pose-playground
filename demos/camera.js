@@ -19,10 +19,30 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
+import {trimDimension, scaleEstimation, imageDrawer} from './image_fix_util.js';
+
 
 const videoWidth = 600;
 const videoHeight = 500;
 const stats = new Stats();
+
+let imageKeypointAttachIndex = -1;
+const poseNum = 0;
+const poseNetKeypointNames = [
+  'Nose',
+  'Left Eye',
+  'Right Eye',
+  'Left Ear',
+  'Right Ear',
+  'Left Shoulder',
+  'Right Shoulder',
+  'Left Elbow',
+  'Right Elbow',
+  'Left Wrist',
+  'Right Wrist',
+  'Left Hip',
+  'Right Hip',
+]; // knees and ankles removed from the original set of posenet keypoints
 
 /**
  * Loads a the camera to be used in the demo
@@ -80,7 +100,7 @@ const guiState = {
     outputStride: defaultMobileNetStride,
     inputResolution: defaultMobileNetInputResolution,
     multiplier: defaultMobileNetMultiplier,
-    quantBytes: defaultQuantBytes
+    quantBytes: defaultQuantBytes,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -115,7 +135,7 @@ function setupGui(cameras, net) {
 
   let architectureController = null;
   guiState[tryResNetButtonName] = function() {
-    architectureController.setValue('ResNet50')
+    architectureController.setValue('ResNet50');
   };
   gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
   updateTryResNetButtonDatGuiCss();
@@ -128,7 +148,7 @@ function setupGui(cameras, net) {
 
   // The input parameters have the most effect on accuracy and speed of the
   // network
-  let input = gui.addFolder('Input');
+  const input = gui.addFolder('Input');
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
@@ -215,7 +235,7 @@ function setupGui(cameras, net) {
           [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800]);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
       updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0]);
-    } else {  // guiState.input.architecture === "ResNet50"
+    } else { // guiState.input.architecture === "ResNet50"
       updateGuiInputResolution(
           defaultResNetInputResolution,
           [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800]);
@@ -231,11 +251,11 @@ function setupGui(cameras, net) {
   // pose (i.e. a person detected in a frame)
   // Min part confidence: the confidence that a particular estimated keypoint
   // position is accurate (i.e. the elbow's position)
-  let single = gui.addFolder('Single Pose Detection');
+  const single = gui.addFolder('Single Pose Detection');
   single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
   single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
 
-  let multi = gui.addFolder('Multi Pose Detection');
+  const multi = gui.addFolder('Multi Pose Detection');
   multi.add(guiState.multiPoseDetection, 'maxPoseDetections')
       .min(1)
       .max(20)
@@ -247,7 +267,7 @@ function setupGui(cameras, net) {
   multi.add(guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0);
   multi.open();
 
-  let output = gui.addFolder('Output');
+  const output = gui.addFolder('Output');
   output.add(guiState.output, 'showVideo');
   output.add(guiState.output, 'showSkeleton');
   output.add(guiState.output, 'showPoints');
@@ -279,7 +299,7 @@ function setupGui(cameras, net) {
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
-  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
   document.getElementById('main').appendChild(stats.dom);
 }
 
@@ -290,6 +310,19 @@ function setupFPS() {
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
+  let calculatedData = {
+    scale: '1.0',
+    rotation: '0.0',
+  };
+  let absoluteScale = 1.0;
+  let rotationOffset = 0.0;
+  let xOffset = 0.0;
+  let yOffset = 0.0;
+  const attachedImg = document.getElementById('attachedImg');
+  const sizeMultiplier = document.getElementById('sizeMultiplier');
+  const rotationInput = document.getElementById('rotationInput');
+  const horizontalTranslation = document.getElementById('horizontalTranslation');
+  const verticalTranslation = document.getElementById('verticalTranslation');
 
   // since images are being fed from a webcam, we want to feed in the
   // original image and then just flip the keypoints' x coordinates. If instead
@@ -301,6 +334,10 @@ function detectPoseInRealTime(video, net) {
   canvas.height = videoHeight;
 
   async function poseDetectionFrame() {
+    absoluteScale = sizeMultiplier.value;
+    rotationOffset = rotationInput.value* (Math.PI / 180);
+    xOffset = horizontalTranslation.value;
+    yOffset = verticalTranslation.value;
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
@@ -324,7 +361,7 @@ function detectPoseInRealTime(video, net) {
         outputStride: guiState.outputStride,
         inputResolution: guiState.inputResolution,
         multiplier: +guiState.changeToMultiplier,
-        quantBytes: guiState.quantBytes
+        quantBytes: guiState.quantBytes,
       });
       toggleLoadingUI(false);
       guiState.multiplier = +guiState.changeToMultiplier;
@@ -340,7 +377,7 @@ function detectPoseInRealTime(video, net) {
         outputStride: +guiState.changeToOutputStride,
         inputResolution: guiState.inputResolution,
         multiplier: guiState.multiplier,
-        quantBytes: guiState.quantBytes
+        quantBytes: guiState.quantBytes,
       });
       toggleLoadingUI(false);
       guiState.outputStride = +guiState.changeToOutputStride;
@@ -356,7 +393,7 @@ function detectPoseInRealTime(video, net) {
         outputStride: guiState.outputStride,
         inputResolution: +guiState.changeToInputResolution,
         multiplier: guiState.multiplier,
-        quantBytes: guiState.quantBytes
+        quantBytes: guiState.quantBytes,
       });
       toggleLoadingUI(false);
       guiState.inputResolution = +guiState.changeToInputResolution;
@@ -372,7 +409,7 @@ function detectPoseInRealTime(video, net) {
         outputStride: guiState.outputStride,
         inputResolution: guiState.inputResolution,
         multiplier: guiState.multiplier,
-        quantBytes: guiState.changeToQuantBytes
+        quantBytes: guiState.changeToQuantBytes,
       });
       toggleLoadingUI(false);
       guiState.quantBytes = guiState.changeToQuantBytes;
@@ -389,22 +426,22 @@ function detectPoseInRealTime(video, net) {
       case 'single-pose':
         const pose = await guiState.net.estimatePoses(video, {
           flipHorizontal: flipPoseHorizontal,
-          decodingMethod: 'single-person'
+          decodingMethod: 'single-person',
         });
         poses = poses.concat(pose);
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        let all_poses = await guiState.net.estimatePoses(video, {
+        const allPoses = await guiState.net.estimatePoses(video, {
           flipHorizontal: flipPoseHorizontal,
           decodingMethod: 'multi-person',
           maxDetections: guiState.multiPoseDetection.maxPoseDetections,
           scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
-          nmsRadius: guiState.multiPoseDetection.nmsRadius
+          nmsRadius: guiState.multiPoseDetection.nmsRadius,
         });
 
-        poses = poses.concat(all_poses);
+        poses = poses.concat(allPoses);
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.multiPoseDetection.minPartConfidence;
         break;
@@ -437,6 +474,11 @@ function detectPoseInRealTime(video, net) {
       }
     });
 
+    if ((attachedImg.src != '') && (imageKeypointAttachIndex != -1) && (poses.length > poseNum)) {
+      calculatedData = await scaleEstimation(poses[poseNum].keypoints, minPartConfidence, calculatedData, imageKeypointAttachIndex);
+      imageDrawer(poses[poseNum].keypoints[imageKeypointAttachIndex], ctx, calculatedData, absoluteScale, xOffset, yOffset, minPartConfidence, attachedImg, rotationOffset);
+    }
+
     // End monitoring code for frames per second
     stats.end();
 
@@ -444,6 +486,54 @@ function detectPoseInRealTime(video, net) {
   }
 
   poseDetectionFrame();
+}
+
+function acceptImage() {
+  const inputImg = document.getElementById('inputImg');
+  const attachedImg = document.getElementById('attachedImg');
+  attachedImg.removeAttribute('width');
+  attachedImg.removeAttribute('height');
+  attachedImg.src = URL.createObjectURL(inputImg.files[0]);
+  attachedImg.onload = function() {
+    trimDimension(attachedImg, videoWidth, videoHeight);
+  };
+}
+
+function posenetKeypointsFill() {
+  const imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
+  const nonePt = document.createElement('OPTION');
+  nonePt.value = -1;
+  nonePt.innerHTML = 'None';
+  imageKeypointAttachIndexSelect.appendChild(nonePt);
+  let i = 0;
+  poseNetKeypointNames.forEach(function(partName) {
+    const part = document.createElement('OPTION');
+    part.innerHTML = partName;
+    part.value = i;
+    imageKeypointAttachIndexSelect.appendChild(part);
+    i++;
+  });
+}
+
+function facemeshKeypointsFill() {
+  window.alert('Please choose PoseNet. FaceMesh not yet impemented');
+}
+
+function dropdownFill() {
+  const model = document.getElementById('model');
+  if (model.value === 'posenet') {
+    posenetKeypointsFill();
+  } else if (model.value === 'facemesh') {
+    facemeshKeypointsFill();
+  } else {
+    //  handpose or handtrack or both
+    // decide later
+  }
+}
+
+function imageKeypointAttachIndexSet() {
+  const imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
+  imageKeypointAttachIndex = imageKeypointAttachIndexSelect.value;
 }
 
 /**
@@ -457,7 +547,7 @@ export async function bindPage() {
     outputStride: guiState.input.outputStride,
     inputResolution: guiState.input.inputResolution,
     multiplier: guiState.input.multiplier,
-    quantBytes: guiState.input.quantBytes
+    quantBytes: guiState.input.quantBytes,
   });
   toggleLoadingUI(false);
 
@@ -466,7 +556,7 @@ export async function bindPage() {
   try {
     video = await loadVideo();
   } catch (e) {
-    let info = document.getElementById('info');
+    const info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
         'or this device does not have a camera';
     info.style.display = 'block';
@@ -476,6 +566,13 @@ export async function bindPage() {
   setupGui([], net);
   setupFPS();
   detectPoseInRealTime(video, net);
+
+  const inputImg = document.getElementById('inputImg');
+  inputImg.onchange = acceptImage;
+
+  dropdownFill();
+  const imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
+  imageKeypointAttachIndexSelect.onchange = imageKeypointAttachIndexSet;
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||

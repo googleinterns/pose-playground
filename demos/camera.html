@@ -88,6 +88,22 @@
         </video>
         <canvas id="output" />
     </div>
+    <input id="inputImg" type="file" accept="image/*" />
+    <img id="attachedImg" style="display: none;" />
+        Size =
+    <input id="sizeMultiplier" type="text" value="1.00" />
+        Rotation =
+    <input id="rotationInput" type="text" value="0.00" />
+    <br>
+        Horizontal offset =
+    <input id="horizontalTranslation" type="text" value="0.0" />
+        Vertical offset =
+    <input id="verticalTranslation" type="text" value="0.0" />
+    <select id="model" style="display: none;">
+      <option value="posenet">PoseNet</option>
+    </select>
+    <select id="imageKeypointAttachIndexSelect">
+    </select>
     <div class="footer">
         <div class="footer-text">
             <p>
