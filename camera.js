@@ -21,6 +21,7 @@ import 'babel-polyfill';
 
 import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 import {trimDimension, scaleEstimation, imageDrawer} from './image_fix_util.js';
+import {removeBackground} from './background_remover.js';
 
 
 const videoWidth = 600;
@@ -517,7 +518,7 @@ function posenetKeypointsFill() {
 }
 
 function facemeshKeypointsFill() {
-  window.alert('Please choose PoseNet. FaceMesh not yet impemented');
+  window.alert('Please choose PoseNet. FaceMesh not yet implemented');
 }
 
 function dropdownFill() {
@@ -535,6 +536,16 @@ function dropdownFill() {
 function imageKeypointAttachIndexSet() {
   const imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
   imageKeypointAttachIndex = imageKeypointAttachIndexSelect.value;
+}
+
+function bgRemover() {
+  let attachedImg = document.getElementById('attachedImg');
+  if (attachedImg.src == '') {
+    window.alert('Input Image First');
+    return;
+  }
+  let marginOfError = document.getElementById('marginOfError').value;
+  attachedImg = removeBackground(attachedImg, marginOfError);
 }
 
 /**
@@ -574,6 +585,8 @@ export async function bindPage() {
   dropdownFill();
   const imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
   imageKeypointAttachIndexSelect.onchange = imageKeypointAttachIndexSet;
+  const removeBg = document.getElementById('removeBg');
+  removeBg.onclick = bgRemover;
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||
