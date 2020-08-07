@@ -66,7 +66,7 @@ const unitLeftArm = [
   {
     position: {
       x: 99.73230810332723,
-      y: 378.14085307874177,
+      y: 378.14085307874177, 
     },
   },
   {
@@ -163,8 +163,18 @@ function faceEstimate(keypoints, minConf, oldData, anchorPt) {
     if (confidenceCheck(keypoints[i].score, minConf)) {
       count++;
       if (count === 2) {
-        calculatedData.calculatedScale = scaleMutliplier(unitFace[rem], unitFace[i], keypoints[rem], keypoints[i]);
-        calculatedData.calculatedRotation = rotFinder(unitFace[rem], unitFace[i], keypoints[rem], keypoints[i]);
+        calculatedData.calculatedScale = scaleMutliplier(
+          unitFace[rem],
+          unitFace[i],
+          keypoints[rem],
+          keypoints[i]
+        );
+        calculatedData.calculatedRotation = rotFinder(
+          unitFace[rem],
+          unitFace[i],
+          keypoints[rem],
+          keypoints[i]
+        );
         break;
       }
       rem = i;
@@ -173,21 +183,38 @@ function faceEstimate(keypoints, minConf, oldData, anchorPt) {
   return calculatedData;
 }
 
-function armEstimate(elbow, wrist, shoulderNear, shoulderFar, refElbowPt, refWristPt, refShoulderNearPt, refShoulderFarPt, minConf, oldData, anchorPt) {
+function armEstimate(elbow, wrist, shoulderNear, shoulderFar,
+  refElbowPt, refWristPt, refShoulderNearPt, refShoulderFarPt,
+  minConf, oldData, anchorPt) {
   const calculatedData = {
     calculatedScale: oldData.calculatedScale,
     calculatedRotation: oldData.calculatedRotation,
   };
   if (confidenceCheck(shoulderFar.score) && confidenceCheck(shoulderNear.score) ) {
-    calculatedData.calculatedScale = scaleMutliplier(refShoulderFarPt, refShoulderNearPt, shoulderFar, shoulderNear);
+    calculatedData.calculatedScale = scaleMutliplier(
+      refShoulderFarPt,
+      refShoulderNearPt,
+      shoulderFar,
+      shoulderNear
+    );
   }
   if (confidenceCheck(elbow.score)) {
     if (anchorPt === 2) {
       if (confidenceCheck(wrist.score)) {
-        calculatedData.calculatedRotation = rotFinder(refElbowPt, refWristPt, elbow, wrist);
+        calculatedData.calculatedRotation = rotFinder(
+          refElbowPt,
+          refWristPt,
+          elbow,
+          wrist
+        );
       }
     } else if (confidenceCheck(shoulderNear.score)) {
-      calculatedData.calculatedRotation = rotFinder(refShoulderNearPt, refElbowPt, shoulderNear, elbow);
+      calculatedData.calculatedRotation = rotFinder(
+        refShoulderNearPt,
+        refElbowPt,
+        shoulderNear,
+        elbow
+      );
     }
   }
   return calculatedData;
@@ -198,7 +225,19 @@ function leftArmEstimate(keypoints, minConf, oldData, anchorPt) {
   const wristIdx = 9;
   const shoulderIdx1 = 5;
   const shoulderIdx2 = 6;
-  return armEstimate(keypoints[elbowIdx], keypoints[wristIdx], keypoints[shoulderIdx1], keypoints[shoulderIdx2], unitLeftArm[0], unitLeftArm[1], unitShoudlers[0], unitShoudlers[1], minConf, oldData, anchorPt - elbowIdx);
+  return armEstimate(
+    keypoints[elbowIdx],
+    keypoints[wristIdx],
+    keypoints[shoulderIdx1],
+    keypoints[shoulderIdx2],
+    unitLeftArm[0],
+    unitLeftArm[1],
+    unitShoudlers[0],
+    unitShoudlers[1],
+    minConf,
+    oldData,
+    anchorPt - elbowIdx
+  );
 }
 
 function rightArmEstimate(keypoints, minConf, oldData, anchorPt) {
@@ -206,7 +245,19 @@ function rightArmEstimate(keypoints, minConf, oldData, anchorPt) {
   const wristIdx = 10;
   const shoulderIdx1 = 6;
   const shoulderIdx2 = 5;
-  return armEstimate(keypoints[elbowIdx], keypoints[wristIdx], keypoints[shoulderIdx1], keypoints[shoulderIdx2], unitRightArm[0], unitRightArm[1], unitShoudlers[1], unitShoudlers[0], minConf, oldData, anchorPt - elbowIdx);
+  return armEstimate(
+    keypoints[elbowIdx],
+    keypoints[wristIdx],
+    keypoints[shoulderIdx1],
+    keypoints[shoulderIdx2],
+    unitRightArm[0],
+    unitRightArm[1],
+    unitShoudlers[1],
+    unitShoudlers[0],
+    minConf,
+    oldData,
+    anchorPt - elbowIdx
+  );
 }
 
 function hipsEstimate(keypoints, minConf, oldData, anchorPt) {
@@ -216,9 +267,19 @@ function hipsEstimate(keypoints, minConf, oldData, anchorPt) {
   };
   const idx1 = 11;
   const idx2 = 12;
-  if ( confidenceCheck(keypoints[idx1].score) && confidenceCheck(keypoints[idx2].score)) {
-    calculatedData.calculatedScale = scaleMutliplier(unitHips[0], unitHips[1], keypoints[idx1], keypoints[idx2]);
-    calculatedData.calculatedRotation = rotFinder(unitHips[0], unitHips[1], keypoints[idx1], keypoints[idx2]);
+  if (confidenceCheck(keypoints[idx1].score) && confidenceCheck(keypoints[idx2].score)) {
+    calculatedData.calculatedScale = scaleMutliplier(
+      unitHips[0],
+      unitHips[1],
+      keypoints[idx1],
+      keypoints[idx2]
+    );
+    calculatedData.calculatedRotation = rotFinder(
+      unitHips[0],
+      unitHips[1],
+      keypoints[idx1],
+      keypoints[idx2]
+    );
   }
   return calculatedData;
 }
@@ -230,9 +291,19 @@ function shoulderEstimate(keypoints, minConf, oldData, anchorPt) {
   };
   const idx1 = 5;
   const idx2 = 6;
-  if ( confidenceCheck(keypoints[idx1].score) && confidenceCheck(keypoints[idx2].score)) {
-    calculatedData.calculatedScale = scaleMutliplier(unitShoudlers[0], unitShoudlers[1], keypoints[idx1], keypoints[idx2]);
-    calculatedData.calculatedRotation = rotFinder(unitShoudlers[0], unitShoudlers[1], keypoints[idx1], keypoints[idx2]);
+  if (confidenceCheck(keypoints[idx1].score) && confidenceCheck(keypoints[idx2].score)) {
+    calculatedData.calculatedScale = scaleMutliplier(
+      unitShoudlers[0],
+      unitShoudlers[1],
+      keypoints[idx1],
+      keypoints[idx2]
+    );
+    calculatedData.calculatedRotation = rotFinder(
+      unitShoudlers[0],
+      unitShoudlers[1],
+      keypoints[idx1],
+      keypoints[idx2]
+    );
   }
   return calculatedData;
 }
@@ -254,7 +325,8 @@ export async function scaleEstimation(keypoints, minConf, oldData, anchorPt) {
   return calculatedData;
 }
 
-export async function imageDrawer(keypoint, ctx, calculatedData, absoluteScale, xOffset, yOffset, minPartConfidence, attachedImg, rotationOffset) {
+export async function imageDrawer(keypoint, ctx, calculatedData,
+   absoluteScale, xOffset, yOffset, minPartConfidence, attachedImg, rotationOffset) {
   if (confidenceCheck(keypoint.score, minPartConfidence)) {
     const calculatedScale = calculatedData.calculatedScale;
     const calculatedRotation = calculatedData.calculatedRotation;

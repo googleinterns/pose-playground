@@ -72,6 +72,8 @@
         }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 
 <body>
@@ -83,44 +85,77 @@
         </div>
         <div class="sk-spinner sk-spinner-pulse"></div>
     </div>
-    <div id='main' style='display:none'>
-        <video id="video" playsinline style="display: none;">
-        </video>
-        <canvas id="output" />
-    </div>
-    <input id="inputImg" type="file" accept="image/*" />
-    <img id="attachedImg" style="display: none;" />
-        Size =
-    <input id="sizeMultiplier" type="text" value="1.00" />
-        Rotation =
-    <input id="rotationInput" type="text" value="0.00" />
-    <br>
-        Horizontal offset =
-    <input id="horizontalTranslation" type="text" value="0.0" />
-        Vertical offset =
-    <input id="verticalTranslation" type="text" value="0.0" />
-    <select id="model" style="display: none;">
-      <option value="posenet">PoseNet</option>
-    </select>
-    <select id="imageKeypointAttachIndexSelect">
-    </select>
-    <div>
-      Margin of error for white backround removal =
-      <input id="marginOfError" type="text" value="0" />
-      <button id="removeBg"> Remove White Background </button>
-    </div>
-    <div class="footer">
-        <div class="footer-text">
-            <p>
-                PoseNet runs with either a <strong>single-pose</strong> or <strong>multi-pose</strong> detection
-                algorithm. The single person pose detector is faster and more accurate but requires only one subject
-                present in the image.
-                <br>
-                <br> The <strong>output stride</strong> and <strong>input resolution</strong> have the largest effects
-                on accuracy/speed. A <i>higher</i> output stride results in lower accuracy but higher speed. A
-                <i>higher</i> image scale factor results in higher accuracy but lower speed. </p>
+    <br><br><br>
+    <div id="contentContainer">
+
+      <div id="leftContainer">
+
+        <div id="objectListContainer">
+          <span class="paragraphTitle">Object List</span>
+          <button id="newImage" >Add New Image</button>
         </div>
+
+        <div id="objectPropertyContainer">
+          <span class="paragraphTitle">Property Editor</span>
+          <div id="properties">
+            <div id="inputHandler">
+              <button id="inputButton">
+                <label for="inputImg">
+                  Choose File
+                </label>
+                <input id="inputImg" type="file" accept="image/*" style='display:none' />
+              </button>
+              <label id="currentInput"></label>
+            </div>
+            <div class="property">
+                Size
+                <input id="sizeMultiplier" type="text" value="1.00" /><br>
+            </div>
+            <div class="property">
+                Rotation
+                <input id="rotationInput" type="text" value="0.00" /><br>
+            </div>
+            <div class="property">
+                Horizontal offset
+                <input id="horizontalTranslation" type="text" value="0.0" /><br>
+            </div>
+            <div class="property">
+                Vertical offset
+                <input id="verticalTranslation" type="text" value="0.0" /><br>
+            </div>
+            <div class="property">
+              <select id="model" style="display: none;">
+                <option value="posenet">PoseNet</option>
+              </select>
+            </div>
+            <div class="property">
+              Anchor Point
+              <select id="imageKeypointAttachIndexSelect">
+              </select>
+            </div>
+            <div class="property">
+              Tolerance
+              <input id="marginOfError" type="text" value="0" /><br>
+              (For background removal)
+              <div class="useClear"></div>
+            </div>
+            <div class="property">
+              Remove White Background
+              <input id="removeBg" type="checkbox" class="checkbox"/><br>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="cameraOutputContainer">
+        <div id='main' style='display:none'>
+            <video id="video" playsinline style="display: none;">
+            </video>
+            <canvas id="output" />
+        </div>
+      </div>
     </div>
+
     <script src="camera.js"></script>
 </body>
 

@@ -1,0 +1,83 @@
+.paragraphTitle {
+  font-weight: bold;
+  font-size: 15pt;
+  display: block;
+}
+
+#cameraOutputContainer {
+  display: table-cell;
+  vertical-align: top;
+}
+
+#contentContainer {
+  font-family: 'Poppins', sans-serif;
+  font-size: 10pt;
+  display: table;
+  border: 10pt solid #CDCDCD;
+  padding : 10pt;
+  padding-bottom: 0pt;
+
+}
+#output {
+  border: 10pt solid #CDCDCD;
+}
+#leftContainer {
+  display: table-cell;
+  line-height: 180%;
+}
+
+#objectListContainer {
+  padding: 10pt;
+  margin-bottom: 10pt;
+  margin-left: 10pt;
+  margin-right: 10pt;
+  height: 200pt;
+  background-color: #CDCDCD;
+  overflow: auto;
+}
+
+#objectPropertyContainer {
+  padding: 10pt;
+  margin-bottom: 10pt;
+  margin-left: 10pt;
+  margin-right: 10pt;
+  background-color: #CDCDCD;
+  height: 200pt;
+  overflow: auto;
+}
+#properties {
+  display: none;
+}
+button {
+  cursor: pointer;
+}
+
+input {
+  float: right;
+  width: 70pt;
+  box-sizing: border-box;
+}
+select {
+  float: right;
+  width: 70pt;
+  box-sizing: border-box;
+}
+.checkbox {
+  float: none;
+  width: auto;
+}
+div {
+  margin: 1pt;
+  padding-left: 1pt;
+}
+.property {
+  background-color: #DEDEDE;
+  padding-left: 2pt;
+  padding-right: 2pt;
+}
+#removeAssetButton {
+  float: right;
+  background-color:#FFE00F;
+  border: none;
+  padding: 3pt;
+}

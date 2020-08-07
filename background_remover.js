@@ -66,7 +66,16 @@ function floodFillDFS(boundaryData, imageData, red, green, blue, marginOfError) 
         let row = value.rowNum;
         let col = value.colNum;
         let index = value.pixArrayValue;
-        if (marked[row][col] == 0 && (compareColor(pixArray[index], pixArray[index+1], pixArray[index+2], pixArray[index+3], red, green, blue, marginOfError))) {
+        if (marked[row][col] == 0 && (compareColor(
+                                        pixArray[index],
+                                        pixArray[index+1],
+                                        pixArray[index+2],
+                                        pixArray[index+3],
+                                        red,
+                                        green,
+                                        blue,
+                                        marginOfError
+                                      ))) {
           marked[row][col] = 1;
           stack.push([row, col]);
           count++;
@@ -93,11 +102,29 @@ function getBoundary(imageData, red, green, blue, marginOfError) {
   for (let i = 0; i < imgH; i++) {
     let index1 = i * imgW * 4;
     let index2 = (i * imgW * 4) + ((imgW - 1) * 4);
-    if ((marked[i][0] == 0) && (compareColor(pixArray[index1], pixArray[index1+1], pixArray[index1+2], pixArray[index1+3], red, green, blue, marginOfError))) {
+    if ((marked[i][0] == 0) && (compareColor(
+                                  pixArray[index1],
+                                  pixArray[index1+1],
+                                  pixArray[index1+2],
+                                  pixArray[index1+3],
+                                  red,
+                                  green,
+                                  blue,
+                                  marginOfError
+                                ))) {
       marked[i][0] = 1;
       stack.push([i, 0]);
     }
-    if ((marked[i][imgW - 1] == 0) && (compareColor(pixArray[index2], pixArray[index2+1], pixArray[index2+2], pixArray[index2+3], red, green, blue, marginOfError))) {
+    if ((marked[i][imgW - 1] == 0) && (compareColor(
+                                        pixArray[index2],
+                                        pixArray[index2+1],
+                                        pixArray[index2+2],
+                                        pixArray[index2+3],
+                                        red,
+                                        green,
+                                        blue,
+                                        marginOfError
+                                        ))) {
       marked[i][imgW - 1] = 1;
       stack.push([i, imgW - 1]);
     }
@@ -106,11 +133,29 @@ function getBoundary(imageData, red, green, blue, marginOfError) {
   for (let i = 1; i < imgW - 1; i++) {
     let index1 = i * 4;
     let index2 = ((imgH -1) * imgW * 4) + i * 4;
-    if ((marked[0][i]==0) && (compareColor(pixArray[index1], pixArray[index1+1], pixArray[index1+2], pixArray[index1+3], red, green, blue, marginOfError))) {
+    if ((marked[0][i]==0) && (compareColor(
+                                pixArray[index1],
+                                pixArray[index1+1],
+                                pixArray[index1+2],
+                                pixArray[index1+3],
+                                red,
+                                green,
+                                blue,
+                                marginOfError
+                              ))) {
       marked[0][i] = 1;
       stack.push([0, i]);
     }
-    if ((marked[imgH - 1][i]==0) && (compareColor(pixArray[index2], pixArray[index2+1], pixArray[index2+2], pixArray[index2+3], red, green, blue, marginOfError))) {
+    if ((marked[imgH - 1][i]==0) && (compareColor(
+                                      pixArray[index2],
+                                      pixArray[index2+1],
+                                      pixArray[index2+2],
+                                      pixArray[index2+3],
+                                      red,
+                                      green,
+                                      blue,
+                                      marginOfError
+                                    ))) {
       marked[imgH - 1][i] = 1;
       stack.push([imgH - 1, i]);
     }
@@ -138,5 +183,4 @@ export async function removeBackground(image, marginOfError) {
   imageData = removeBoundaryColor(imageData, 255, 255, 255, marginOfError);
   ctx.putImageData(imageData, 0, 0);
   image.src = canvas.toDataURL();
-  return image;
 }

@@ -19,17 +19,30 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 import 'babel-polyfill';
 
-import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
+import {
+  drawBoundingBox,
+  drawKeypoints,
+  drawSkeleton,
+  isMobile,
+  toggleLoadingUI,
+  tryResNetButtonName,
+  tryResNetButtonText,
+  updateTryResNetButtonDatGuiCss,
+} from './demo_util';
 import {trimDimension, scaleEstimation, imageDrawer} from './image_fix_util.js';
 import {removeBackground} from './background_remover.js';
 
+let attachedObjectList = [];
+let divElemList = [];
+let objListNum = -1;
+let prevObjNum = -1;
+let totalAssetCount = 0;
 
-const videoWidth = 600;
-const videoHeight = 500;
+const videoWidth = 660;
+const videoHeight = 550;
 const stats = new Stats();
 
-let imageKeypointAttachIndex = -1;
-const poseNum = 0;
+
 const poseNetKeypointNames = [
   'Nose',
   'Left Eye',
@@ -45,6 +58,82 @@ const poseNetKeypointNames = [
   'Left Hip',
   'Right Hip',
 ]; // knees and ankles removed from the original set of posenet keypoints
+
+class AttachmentData {
+  constructor() {
+    this.poseNum = 0;
+    this.imageKeypointAttachIndex = -1;
+    this.calculatedData = {
+      scale: '1.0',
+      rotation: '0.0',
+    };
+    this.absoluteScale = 1.0;
+    this.rotationOffset = 0.0;
+    this.xOffset = 0.0;
+    this.yOffset = 0.0;
+    this.attachedImg = new Image(0, 0);
+    this.marginOfError = 0;
+    this.originalImage = new Image(0, 0);
+    this.backgroundLessImage = new Image(0, 0);
+    this.isBackgroundRemoved = false;
+    this.setValue = this.setValue.bind(this);
+    this.renderImage = this.renderImage.bind(this);
+    this.acceptImage = this.acceptImage.bind(this);
+    this.bgRemover = this.bgRemover.bind(this);
+    this.currentInputName = 'no File Chosen';
+  }
+
+  setValue(propertyName, value) {
+    this[propertyName] = value;
+  }
+
+  async renderImage(poses, minPartConfidence, ctx) {
+    if (this.isBackgroundRemoved) {
+      this.attachedImg = this.backgroundLessImage.cloneNode(true);
+    } else {
+      this.attachedImg = this.originalImage.cloneNode(true);
+    }
+    if ((this.attachedImg.src != '') && (this.imageKeypointAttachIndex != -1) && (poses.length > this.poseNum)) {
+      this.calculatedData = await scaleEstimation(
+        poses[this.poseNum].keypoints,
+        minPartConfidence,
+        this.calculatedData,
+        this.imageKeypointAttachIndex
+      );
+      imageDrawer(
+        poses[this.poseNum].keypoints[this.imageKeypointAttachIndex],
+        ctx, this.calculatedData,
+        this.absoluteScale,
+        this.xOffset,
+        this.yOffset,
+        minPartConfidence,
+        this.attachedImg,
+        this.rotationOffset
+      );
+    }
+  }
+
+  acceptImage() {
+    let objRef = this;
+    const inputImg = document.getElementById('inputImg');
+    this.originalImage.removeAttribute('width');
+    this.originalImage.removeAttribute('height');
+    this.originalImage.src = URL.createObjectURL(inputImg.files[0]);
+    this.currentInputName = inputImg.files[0].name;
+    this.originalImage.onload = function() {
+      trimDimension(this, videoWidth, videoHeight);
+      objRef.bgRemover();
+    };
+  }
+
+  bgRemover() {
+    if (this.originalImage.src == '') {
+      return;
+    }
+    this.backgroundLessImage = this.originalImage.cloneNode(true);
+    removeBackground(this.backgroundLessImage, this.marginOfError);
+  }
+}
 
 /**
  * Loads a the camera to be used in the demo
@@ -309,22 +398,125 @@ function setupFPS() {
  * Feeds an image to posenet to estimate poses - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
  */
+
+function propertyDisplayer() {
+  let properties = document.getElementById('properties');
+  if (prevObjNum != -1 && prevObjNum < attachedObjectList.length) {
+    divElemList[prevObjNum].style.backgroundColor = 'white';
+    divElemList[prevObjNum].lastElementChild.style.display = 'none';
+  }
+  if (objListNum == -1) {
+    properties.style.display = 'none';
+    return;
+  } else {
+    properties.style.display = 'inline-block';
+  }
+  let inputImg = document.getElementById('inputImg');
+  let currentInput = document.getElementById('currentInput');
+  let sizeMultiplier = document.getElementById('sizeMultiplier');
+  let rotationInput = document.getElementById('rotationInput');
+  let horizontalTranslation = document.getElementById('horizontalTranslation');
+  let verticalTranslation = document.getElementById('verticalTranslation');
+
+  let imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
+  let removeBg = document.getElementById('removeBg');
+  let marginOfError = document.getElementById('marginOfError');
+
+  prevObjNum = objListNum;
+  divElemList[objListNum].style.backgroundColor = '#FFE00F';
+  divElemList[prevObjNum].lastElementChild.style.display = 'inline';
+
+  inputImg.oninput = function() {
+    attachedObjectList[objListNum].acceptImage();
+    currentInput.innerHTML = attachedObjectList[objListNum].currentInputName;
+  };
+  currentInput.innerHTML = attachedObjectList[objListNum].currentInputName;
+  sizeMultiplier.value = attachedObjectList[objListNum].absoluteScale;
+  sizeMultiplier.onchange = function() {
+    attachedObjectList[objListNum].setValue('absoluteScale', sizeMultiplier.value);
+  };
+  rotationInput.value = attachedObjectList[objListNum].rotationOffset * (180 / Math.PI);
+  rotationInput.onchange = function() {
+    attachedObjectList[objListNum].setValue('rotationOffset', rotationInput.value * (Math.PI / 180));
+  };
+  horizontalTranslation.value = attachedObjectList[objListNum].xOffset;
+  horizontalTranslation.onchange = function() {
+    attachedObjectList[objListNum].setValue('xOffset', horizontalTranslation.value);
+  };
+  verticalTranslation.value = attachedObjectList[objListNum].yOffset;
+  verticalTranslation.onchange = function() {
+    attachedObjectList[objListNum].setValue('yOffset', verticalTranslation.value);
+  };
+  imageKeypointAttachIndexSelect.selectedIndex = parseInt(attachedObjectList[objListNum].imageKeypointAttachIndex)+1;
+  imageKeypointAttachIndexSelect.onchange = function() {
+    attachedObjectList[objListNum].setValue('imageKeypointAttachIndex', imageKeypointAttachIndexSelect.value);
+  };
+  removeBg.checked = attachedObjectList[objListNum].isBackgroundRemoved;
+  removeBg.onclick = function() {
+    attachedObjectList[objListNum].setValue('isBackgroundRemoved', removeBg.checked);
+  };
+  marginOfError.value = attachedObjectList[objListNum].marginOfError;
+  marginOfError.onchange = function() {
+        attachedObjectList[objListNum].setValue('marginOfError', marginOfError.value);
+        attachedObjectList[objListNum].bgRemover();
+  };
+}
+
+function addImage() {
+  let obj = new AttachmentData();
+  attachedObjectList.push(obj);
+  totalAssetCount++;
+}
+
+function removeImage() {
+  let toDelete = divElemList[objListNum];
+  if (objListNum == (attachedObjectList.length - 1)) {
+    // last element so need not assign to this index the last object and delete for O(1)
+    attachedObjectList.pop();
+    divElemList.pop();
+    objListNum--;
+  } else {
+    attachedObjectList[objListNum] = attachedObjectList.pop();
+    // assign to this index the last object and delete last object for O(1)
+    divElemList[objListNum] = divElemList.pop();
+    divElemList[objListNum].title = toDelete.title;
+  }
+  toDelete.remove();
+  propertyDisplayer();
+}
+
+
+function newAsset() {
+  let objectListContainer = document.getElementById('objectListContainer');
+  addImage();
+  objListNum = attachedObjectList.length - 1;
+  let divElem = document.createElement('div');
+  divElem.innerHTML = 'Object-' + totalAssetCount;
+  divElem.title = objListNum;
+  divElem.style.cursor = 'pointer';
+  let removeButton = document.createElement('button');
+  removeButton.id = 'removeAssetButton';
+  removeButton.onclick = function() {
+    removeImage();
+    event.stopPropagation();
+  };
+  removeButton.innerHTML = '&#10006;';
+  divElem.appendChild(removeButton);
+  divElemList.push(divElem);
+  divElem.onclick = function() {
+    objListNum = parseInt(divElem.title);
+    propertyDisplayer();
+  };
+  propertyDisplayer();
+  objectListContainer.appendChild(divElem);
+}
+
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
-  let calculatedData = {
-    scale: '1.0',
-    rotation: '0.0',
-  };
-  let absoluteScale = 1.0;
-  let rotationOffset = 0.0;
-  let xOffset = 0.0;
-  let yOffset = 0.0;
-  const attachedImg = document.getElementById('attachedImg');
-  const sizeMultiplier = document.getElementById('sizeMultiplier');
-  const rotationInput = document.getElementById('rotationInput');
-  const horizontalTranslation = document.getElementById('horizontalTranslation');
-  const verticalTranslation = document.getElementById('verticalTranslation');
+
+  let newImage = document.getElementById('newImage');
+  newImage.onclick = newAsset;
 
   // since images are being fed from a webcam, we want to feed in the
   // original image and then just flip the keypoints' x coordinates. If instead
@@ -336,10 +528,6 @@ function detectPoseInRealTime(video, net) {
   canvas.height = videoHeight;
 
   async function poseDetectionFrame() {
-    absoluteScale = sizeMultiplier.value;
-    rotationOffset = rotationInput.value* (Math.PI / 180);
-    xOffset = horizontalTranslation.value;
-    yOffset = verticalTranslation.value;
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
@@ -476,10 +664,10 @@ function detectPoseInRealTime(video, net) {
       }
     });
 
-    if ((attachedImg.src != '') && (imageKeypointAttachIndex != -1) && (poses.length > poseNum)) {
-      calculatedData = await scaleEstimation(poses[poseNum].keypoints, minPartConfidence, calculatedData, imageKeypointAttachIndex);
-      imageDrawer(poses[poseNum].keypoints[imageKeypointAttachIndex], ctx, calculatedData, absoluteScale, xOffset, yOffset, minPartConfidence, attachedImg, rotationOffset);
-    }
+    attachedObjectList.forEach(function(asset) {
+        asset.renderImage(poses, minPartConfidence, ctx);
+    });
+
 
     // End monitoring code for frames per second
     stats.end();
@@ -488,17 +676,6 @@ function detectPoseInRealTime(video, net) {
   }
 
   poseDetectionFrame();
-}
-
-function acceptImage() {
-  const inputImg = document.getElementById('inputImg');
-  const attachedImg = document.getElementById('attachedImg');
-  attachedImg.removeAttribute('width');
-  attachedImg.removeAttribute('height');
-  attachedImg.src = URL.createObjectURL(inputImg.files[0]);
-  attachedImg.onload = function() {
-    trimDimension(attachedImg, videoWidth, videoHeight);
-  };
 }
 
 function posenetKeypointsFill() {
@@ -533,26 +710,13 @@ function dropdownFill() {
   }
 }
 
-function imageKeypointAttachIndexSet() {
-  const imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
-  imageKeypointAttachIndex = imageKeypointAttachIndexSelect.value;
-}
-
-function bgRemover() {
-  let attachedImg = document.getElementById('attachedImg');
-  if (attachedImg.src == '') {
-    window.alert('Input Image First');
-    return;
-  }
-  let marginOfError = document.getElementById('marginOfError').value;
-  attachedImg = removeBackground(attachedImg, marginOfError);
-}
-
 /**
  * Kicks off the demo by loading the posenet model, finding and loading
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
+  let objectPropertyContainer = document.getElementById('objectPropertyContainer');
+  let objectListContainer = document.getElementById('objectListContainer');
   toggleLoadingUI(true);
   const net = await posenet.load({
     architecture: guiState.input.architecture,
@@ -569,7 +733,7 @@ export async function bindPage() {
     video = await loadVideo();
   } catch (e) {
     const info = document.getElementById('info');
-    info.textContent = 'this browser does not support video capture,' +
+    info.textContent = 'this browser does not support video capture, ' +
         'or this device does not have a camera';
     info.style.display = 'block';
     throw e;
@@ -578,15 +742,13 @@ export async function bindPage() {
   setupGui([], net);
   setupFPS();
   detectPoseInRealTime(video, net);
-
-  const inputImg = document.getElementById('inputImg');
-  inputImg.onchange = acceptImage;
-
   dropdownFill();
-  const imageKeypointAttachIndexSelect = document.getElementById('imageKeypointAttachIndexSelect');
-  imageKeypointAttachIndexSelect.onchange = imageKeypointAttachIndexSet;
-  const removeBg = document.getElementById('removeBg');
-  removeBg.onclick = bgRemover;
+  window.addEventListener('click', function(event) {
+    if (!(objectPropertyContainer.contains(event.target) || objectListContainer.contains(event.target))) {
+      objListNum = -1;
+      propertyDisplayer();
+    }
+  });
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||
