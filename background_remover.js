@@ -1,3 +1,8 @@
+// To remove white background, a flood-fill algorithm is used.
+// We use flood fill from all the points on the four boundaries of the image.
+// If we find a point that is white/ fits within the margin of error we make it transparent
+// We treat transparent points as white points as well during propagation
+
 function compareColor(pixR, pixG, pixB, opacity, refR, refG, refB, marginOfError) {
   if (opacity == 0) {
     return true;
