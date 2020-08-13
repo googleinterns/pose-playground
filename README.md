@@ -22,7 +22,7 @@ git clone https://github.com/anindya-bhowmick/posenet_playground
 ```
 Cd into posenet_playground and install dependencies:
 ```sh
-cd posenet_playground
+cd posenet_playground/source
 yarn
 ```
 Start the dev demo server:
