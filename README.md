@@ -33,3 +33,7 @@ yarn watch
 
 * This repository was initially cloned from the [Posenet repository](https://github.com/tensorflow/tfjs-models/tree/master/posenet). Posenet has been used to identify the various keypoints where the assets can be attached.
 * The assets for the Demo.gif were taken from [Creative Commons](https://creativecommons.org/) and it was recorded using [screencastify](https://www.screencastify.com/).
+
+## Disclaimer
+
+This is not an officially supported Google product
