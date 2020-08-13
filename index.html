@@ -3,7 +3,8 @@
 
 <head>
     <title>PoseNet - Camera Feed Demo</title>
-    <style>.footer {
+    <style>
+        .footer {
             position: fixed;
             left: 0;
             bottom: 0;
@@ -68,16 +69,17 @@
 
         .spinner-text {
             float: left;
-        }</style>
+        }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 
 <body>
-    <div id="info" style="display:none">
+    <div id="info" style='display:none'>
     </div>
-    <div id="loading" style="display:flex">
+    <div id="loading" style='display:flex'>
         <div class="spinner-text">
             Loading PoseNet model...
         </div>
@@ -90,7 +92,7 @@
 
         <div id="objectListContainer">
           <span class="paragraphTitle">Object List</span>
-          <button id="newImage">Add New Image</button>
+          <button id="newImage" >Add New Image</button>
         </div>
 
         <div id="objectPropertyContainer">
@@ -101,25 +103,25 @@
                 <label for="inputImg">
                   Choose File
                 </label>
-                </button><input id="inputImg" type="file" accept="image/*" style="display:none">
-              
+                <input id="inputImg" type="file" accept="image/*" style='display:none' />
+              </button>
               <label id="currentInput"></label>
             </div>
             <div class="property">
                 Size
-                <input id="sizeMultiplier" type="text" value="1.00"><br>
+                <input id="sizeMultiplier" type="text" value="1.00" /><br>
             </div>
             <div class="property">
                 Rotation
-                <input id="rotationInput" type="text" value="0.00"><br>
+                <input id="rotationInput" type="text" value="0.00" /><br>
             </div>
             <div class="property">
                 Horizontal offset
-                <input id="horizontalTranslation" type="text" value="0.0"><br>
+                <input id="horizontalTranslation" type="text" value="0.0" /><br>
             </div>
             <div class="property">
                 Vertical offset
-                <input id="verticalTranslation" type="text" value="0.0"><br>
+                <input id="verticalTranslation" type="text" value="0.0" /><br>
             </div>
             <div class="property">
               <select id="model" style="display: none;">
@@ -133,24 +135,24 @@
             </div>
             <div class="property">
               Tolerance
-              <input id="marginOfError" type="text" value="0"><br>
+              <input id="marginOfError" type="text" value="0" /><br>
               (For background removal)
               <div class="useClear"></div>
             </div>
             <div class="property">
               Remove White Background
-              <input id="removeBg" type="checkbox" class="checkbox"><br>
+              <input id="removeBg" type="checkbox" class="checkbox"/><br>
             </div>
           </div>
         </div>
       </div>
 
       <div id="cameraOutputContainer">
-        <div id="main" style="display:none">
-            <video id="video" playsinline="" style="display: none;">
+        <div id='main' style='display:none'>
+            <video id="video" playsinline style="display: none;">
             </video>
-            <canvas id="output">
-        </canvas></div>
+            <canvas id="output" />
+        </div>
       </div>
     </div>
 
