@@ -6,6 +6,8 @@ Pose Playground is a playful way for users to experiment with different AI pose 
 
 <img src="Demo.gif">
 
+<a href="https://googleinterns.github.io/pose-playground/">Live Demo</a>
+
 ## Features 
 
 * Allow users to upload images to be attached to key points in a pose tracked using a live webcam feed.
