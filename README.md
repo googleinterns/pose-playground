@@ -20,7 +20,7 @@ Pose Playground is a playful way for users to experiment with different AI pose 
 
 Clone the repository using:
 ```sh
-git clone https://github.com/anindya-bhowmick/posenet_playground
+git clone https://github.com/googleinterns/posenet_playground
 ```
 Cd into posenet_playground and install dependencies:
 ```sh
